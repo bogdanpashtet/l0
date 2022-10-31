@@ -1,0 +1,32 @@
+{{ define "index" }}
+    {{ template "header" }}
+    <title>{{ .Title }}</title>
+    <body>
+    <div class="conteiner m-5">
+        <h1>All messages:</h1>
+        {{ range .List }}
+            <div class="card m-3" style="width: 100rem;">
+            <div class="card-body">
+                <a href="message/{{ .OrderUID }}" class="card-link">
+                <b>order_uid:</b> {{ .OrderUID }}<br>
+                </a>
+               <b>track_number:</b> {{ .TrackNumber }}<br>
+               <b>entry:</b> {{ .Entry }}<br>
+               <b>delivery:</b> {{ .Delivery }}<br>
+               <b>payment:</b> {{ .Payment }}<br>
+               <b>items:</b> {{ .Items }}<br>
+               <b>locale:</b> {{ .Locale }}<br>
+               <b>internal_signature:</b> {{ .InternalSignature }}<br>
+               <b>customer_id:</b> {{ .CustomerId }}<br>
+               <b>delivery_service:</b> {{ .DeliveryService }}<br>
+               <b>shardkey:</b> {{ .Shardkey }}<br>
+               <b>sm_id:</b> {{ .SmId }}<br>
+               <b>date_created:</b> {{ .DateCreated }}<br>
+               <b>oof_shred:</b> {{ .OofShred }}<br>
+           </div>
+        </div>
+
+        {{ end }}
+    </div>
+    {{ template "footer" }}
+{{ end }}

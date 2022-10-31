@@ -1,0 +1,75 @@
+{{ define "message" }}
+  {{ template "header" }}
+  <title>{{ .Title }}</title>
+  <body>
+  <div class="conteiner m-5">
+    <h1>Message № {{ .Order.OrderUID }}:</h1>
+      <div class="card m-3" style="width: 100rem;">
+        <div class="card-body">
+            <b>order_uid:</b> {{ .Order.OrderUID }}<br>
+          <b>track_number:</b> {{ .Order.TrackNumber }}<br>
+          <b>entry:</b> {{ .Order.Entry }}<br>
+          <div class="mx-4">
+            Delivery: {<br>
+            <div class="mx-4">
+            <b>name:</b> {{ .Order.Delivery.Name }}<br>
+            <b>phone:</b> {{ .Order.Delivery.Phone }}<br>
+            <b>zip:</b> {{ .Order.Delivery.Zip }}<br>
+            <b>city:</b> {{ .Order.Delivery.City }}<br>
+            <b>address:</b> {{ .Order.Delivery.Address }}<br>
+            <b>region:</b> {{ .Order.Delivery.Region }}<br>
+            <b>email:</b> {{ .Order.Delivery.Email }}<br>
+            </div>
+            }
+          </div>
+          <div class="mx-4">
+            Payment: {<br>
+            <div class="mx-4">
+              <b>transaction:</b> {{ .Order.Payment.Transaction }}<br>
+              <b>request_id:</b> {{ .Order.Payment.RequestID }}<br>
+              <b>currency:</b> {{ .Order.Payment.Currency }}<br>
+              <b>provider:</b> {{ .Order.Payment.Provider }}<br>
+              <b>amount:</b> {{ .Order.Payment.Amount }}<br>
+              <b>payment_dt:</b> {{ .Order.Payment.PaymentDT }}<br>
+              <b>bank:</b> {{ .Order.Payment.Bank }}<br>
+              <b>delivery_cost:</b> {{ .Order.Payment.DeliveryCost }}<br>
+              <b>goods_total:</b> {{ .Order.Payment.GoodsTotal }}<br>
+              <b>custom_fee:</b> {{ .Order.Payment.CustomFee }}<br>
+            </div>
+            }
+          </div>
+          <div class="mx-4">
+            Items: [<br>
+            {{ range .Order.Items}}
+              {<br>
+              <div class="mx-4">
+                <b>chrt_id:</b> {{ .ChrtID }}<br>
+                <b>track_number:</b> {{ .TrackNumber }}<br>
+                <b>price:</b> {{ .Price }}<br>
+                <b>rid:</b> {{ .Rid }}<br>
+                <b>name:</b> {{ .Name }}<br>
+                <b>sale:</b> {{ .Sale }}<br>
+                <b>size:</b> {{ .Size }}<br>
+                <b>total_price:</b> {{ .TotalPrice }}<br>
+                <b>nm_id:</b> {{ .NmID }}<br>
+                <b>brand:</b> {{ .Brand }}<br>
+                <b>status:</b> {{ .Status }}<br>
+              </div>
+              },<br>
+            {{ end }}
+            ]
+          </div>
+          <b>locale:</b> {{ .Order.Locale }}<br>
+          <b>internal_signature:</b> {{ .Order.InternalSignature }}<br>
+          <b>customer_id:</b> {{ .Order.CustomerId }}<br>
+          <b>delivery_service:</b> {{ .Order.DeliveryService }}<br>
+          <b>shardkey:</b> {{ .Order.Shardkey }}<br>
+          <b>sm_id:</b> {{ .Order.SmId }}<br>
+          <b>date_created:</b> {{ .Order.DateCreated }}<br>
+          <b>oof_shred:</b> {{ .Order.OofShred }}<br>
+        </div>
+      </div>
+  </div>
+  <button type="button" class="btn btn-outline-primary"><a href="/">On main Page</a></button>
+  {{ template "footer" }}
+{{ end }}
