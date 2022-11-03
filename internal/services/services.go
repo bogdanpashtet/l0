@@ -24,8 +24,6 @@ func GetMessage() {
 
 	sc, _ := stan.Connect("prod", "sub1")
 
-	defer sc.Close()
-
 	_, err := sc.Subscribe("msg", func(m *stan.Msg) {
 		order, err := unmarshalMessage(m)
 		if err != nil {
@@ -42,8 +40,4 @@ func GetMessage() {
 	if err != nil {
 		log.Printf("Error in subscription: %v\n", err)
 	}
-
-	// block routine for getting messages
-	a := make(chan struct{})
-	<-a
 }

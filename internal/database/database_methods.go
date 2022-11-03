@@ -42,48 +42,60 @@ func AddMessageToDatabase(order models.Order) error {
 	conn := connection()
 	defer closeConnection(conn)
 
+	tx, err := conn.BeginTx(context.TODO(), pgx.TxOptions{})
+	ctx := context.Background()
+
 	// add data to orders
-	_, err := conn.Exec(context.Background(),
-		"INSERT INTO orders (order_uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shred) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);",
-		order.OrderUID, order.TrackNumber, order.Entry, order.Locale, order.InternalSignature, order.CustomerId, order.DeliveryService,
-		order.Shardkey, order.SmId, order.DateCreated, order.OofShred)
+	insertItemQuery := "INSERT INTO orders (order_uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shred) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);"
+	_, err = tx.Exec(ctx, insertItemQuery,
+		order.OrderUID, order.TrackNumber, order.Entry, order.Locale, order.InternalSignature, order.CustomerId,
+		order.DeliveryService, order.Shardkey, order.SmId, order.DateCreated, order.OofShred)
 	if err != nil {
+		tx.Rollback(ctx)
 		return errors.New(fmt.Sprintf("Orders insertion failed (%v)\n", err))
 	}
 
 	// add data to delivery
-	_, err = conn.Exec(context.Background(),
-		"INSERT INTO delivery (order_uid, name, phone, zip, city, address, region, email) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);",
+	insertItemQuery = "INSERT INTO delivery (order_uid, name, phone, zip, city, address, region, email) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);"
+	_, err = tx.Exec(ctx, insertItemQuery,
 		order.OrderUID, order.Delivery.Name, order.Delivery.Phone, order.Delivery.Zip,
 		order.Delivery.City, order.Delivery.Address, order.Delivery.Region, order.Delivery.Email)
 	if err != nil {
+		tx.Rollback(ctx)
 		return errors.New(fmt.Sprintf("Delivery insertion failed (%v)\n", err))
 	}
 
 	// add data to payment
-	_, err = conn.Exec(context.Background(),
-		"INSERT INTO payment (order_uid, transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);",
+	insertItemQuery = "INSERT INTO payment (order_uid, transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);"
+	_, err = tx.Exec(ctx, insertItemQuery,
 		order.OrderUID, order.Payment.Transaction, order.Payment.RequestID, order.Payment.Currency, order.Payment.Provider,
 		order.Payment.Amount, order.Payment.PaymentDT, order.Payment.Bank, order.Payment.DeliveryCost, order.Payment.GoodsTotal,
 		order.Payment.CustomFee)
 	if err != nil {
+		tx.Rollback(ctx)
 		return errors.New(fmt.Sprintf("Payment insertion failed (%v)\n", err))
 	}
 
 	// add all items to database
+	insertItemQuery = "INSERT INTO items (order_uid, chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);"
 	for i := range order.Items {
-		_, err = conn.Exec(context.Background(),
-			"INSERT INTO items (order_uid, chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);",
+		_, err = tx.Exec(ctx, insertItemQuery,
 			order.OrderUID, order.Items[i].ChrtID, order.Items[i].TrackNumber, order.Items[i].Price, order.Items[i].Rid,
 			order.Items[i].Name, order.Items[i].Sale, order.Items[i].Size, order.Items[i].TotalPrice, order.Items[i].NmID,
 			order.Items[i].Brand, order.Items[i].Status)
 		if err != nil {
+			tx.Rollback(ctx)
 			return errors.New(fmt.Sprintf("Item %v insertion failed (%v)\n", i, err))
 		}
 	}
 
-	log.Printf("Got new message!")
-	return nil
+	err = tx.Commit(ctx)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Commit error: (%v)\n", err))
+	} else {
+		log.Printf("Got new message!")
+		return nil
+	}
 }
 
 // SyncCacheAndDatabase - synchronize cache and database values
