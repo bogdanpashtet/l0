@@ -27,7 +27,7 @@ func GetMessage() {
 	_, err := sc.Subscribe("msg", func(m *stan.Msg) {
 		order, err := unmarshalMessage(m)
 		if err != nil {
-			log.Printf("Error in marshaling message: %v\n", err)
+			log.Printf("Error in marshaling message (incorrect messege type): %v\n", err)
 		} else {
 			err = database.AddMessageToDatabase(order) // add to database
 			if err != nil {
