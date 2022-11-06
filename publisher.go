@@ -13,29 +13,6 @@ func main() {
 	sc, _ := stan.Connect("prod", "simple-pub")
 	defer sc.Close()
 
-	delivery := models.Delivery{
-		Name:    "Test Testov",
-		Phone:   "+9720000000",
-		Zip:     "2639809",
-		City:    "Kiryat Mozkin",
-		Address: "Ploshad Mira",
-		Region:  "Kraiot",
-		Email:   "test@gmail.com",
-	}
-
-	payment := models.Payment{
-		Transaction:  "b563feb7b2b84b6test",
-		RequestID:    "",
-		Currency:     "USD",
-		Provider:     "wbpay",
-		PaymentDT:    1817,
-		Amount:       1637907727,
-		Bank:         "alpha",
-		DeliveryCost: 1500,
-		GoodsTotal:   317,
-		CustomFee:    0,
-	}
-
 	item := models.Items{
 		ChrtID:      9934930,
 		TrackNumber: "WBILMTESTTRACK",
@@ -54,11 +31,30 @@ func main() {
 	items = append(items, item)
 
 	order := models.Order{
-		OrderUID:          "b563feb7b2b84b6test",
-		TrackNumber:       "WBILMTESTTRACK",
-		Entry:             "WBIL",
-		Delivery:          delivery,
-		Payment:           payment,
+		OrderUID:    "b563feb7b2b84b6test",
+		TrackNumber: "WBILMTESTTRACK",
+		Entry:       "WBIL",
+		Delivery: models.Delivery{
+			Name:    "Test Testov",
+			Phone:   "+9720000000",
+			Zip:     "2639809",
+			City:    "Kiryat Mozkin",
+			Address: "Ploshad Mira",
+			Region:  "Kraiot",
+			Email:   "test@gmail.com",
+		},
+		Payment: models.Payment{
+			Transaction:  "b563feb7b2b84b6test",
+			RequestID:    "",
+			Currency:     "USD",
+			Provider:     "wbpay",
+			PaymentDT:    1817,
+			Amount:       1637907727,
+			Bank:         "alpha",
+			DeliveryCost: 1500,
+			GoodsTotal:   317,
+			CustomFee:    0,
+		},
 		Items:             items,
 		Locale:            "en",
 		InternalSignature: "",
@@ -70,10 +66,11 @@ func main() {
 		OofShred:          "1",
 	}
 
-	for i := 1; ; i++ {
+	for i := 10; ; i++ {
 
-		order.OrderUID = strconv.Itoa(i)       // create unique identifier
-		order.Items[0].Price = int64(1000 + i) // create unique identifier
+		order.OrderUID = strconv.Itoa(i)            // create unique identifier
+		order.Payment.Transaction = strconv.Itoa(i) // create unique identifier
+		order.Items[0].Price = int64(1000 + i)      // create unique identifier
 		order.Payment.Amount = int64(i * i * 100)
 		order.Delivery.Address = "Ploshad Mira " + strconv.Itoa(i+10)
 		record, _ := json.Marshal(order)

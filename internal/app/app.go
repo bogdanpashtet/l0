@@ -10,14 +10,14 @@ import (
 )
 
 func Run() {
-	err := database.SyncCacheAndDatabase()
+	err := database.SyncCacheAndDatabase(database.Connection())
 	if err != nil {
 		log.Print(err)
 	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", transport.MainPage)
-	router.HandleFunc("/message/{uid:[0-9]+}", transport.MessageHandler)
+	router.HandleFunc("/message/{uid:[0-9, A-Z, a-z]+}", transport.MessageHandler)
 
 	go services.GetMessage()
 

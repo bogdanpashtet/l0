@@ -18,16 +18,13 @@ const (
 	database = "l0"
 )
 
-// closeConnection - close connection to database
-func closeConnection(link *pgx.Conn) {
-	err := link.Close(context.Background())
-	if err != nil {
-		log.Printf("Connection closing fail: %v\n", err)
-	}
+type PgxIface interface {
+	Begin(context.Context) (pgx.Tx, error)
+	Close(context.Context) error
 }
 
-// connection - connect to database
-func connection() *pgx.Conn {
+// Connection - connect to database
+func Connection() *pgx.Conn {
 	connectionUrl := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", username, password, host, port, database)
 	conn, err := pgx.Connect(context.Background(), connectionUrl)
 	if err != nil {
@@ -38,12 +35,11 @@ func connection() *pgx.Conn {
 }
 
 // AddMessageToDatabase - addition message to four tables of database
-func AddMessageToDatabase(order models.Order) error {
-	conn := connection()
-	defer closeConnection(conn)
-
-	tx, err := conn.BeginTx(context.TODO(), pgx.TxOptions{})
+func AddMessageToDatabase(db PgxIface, order models.Order) error {
 	ctx := context.Background()
+
+	tx, err := db.Begin(ctx)
+	defer db.Close(ctx)
 
 	// add data to orders
 	insertItemQuery := "INSERT INTO orders (order_uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shred) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);"
@@ -100,13 +96,18 @@ func AddMessageToDatabase(order models.Order) error {
 
 // SyncCacheAndDatabase - synchronize cache and database values
 // copy values from database to cache
-func SyncCacheAndDatabase() error {
-	conn := connection()
-	defer closeConnection(conn)
+func SyncCacheAndDatabase(db PgxIface) error {
+	//conn := connection()
+	//defer closeConnection(conn)
+
+	ctx := context.Background()
+
+	tx, err := db.Begin(ctx)
+	defer db.Close(ctx)
 
 	var countOfRowsInTable int
 
-	err := conn.QueryRow(context.Background(), "SELECT COUNT(*) FROM orders;").Scan(&countOfRowsInTable)
+	err = tx.QueryRow(ctx, "SELECT COUNT(*) FROM orders;").Scan(&countOfRowsInTable)
 	if err != nil {
 		return errors.New(fmt.Sprintf("QueryRow failed (%v)\n", err))
 	}
@@ -114,7 +115,7 @@ func SyncCacheAndDatabase() error {
 	if len(models.Cache) != countOfRowsInTable {
 
 		// copy orders to cache
-		rows, err := conn.Query(context.Background(), "select * from orders;")
+		rows, err := tx.Query(ctx, "select * from orders;")
 		if err != nil {
 			return errors.New(fmt.Sprintf("QueryRow (orders) failed (%v)\n", err))
 		}
@@ -133,7 +134,7 @@ func SyncCacheAndDatabase() error {
 		}
 
 		// copy delivery to cache
-		rows, err = conn.Query(context.Background(), "SELECT * FROM delivery;")
+		rows, err = tx.Query(ctx, "SELECT * FROM delivery;")
 		if err != nil {
 			return errors.New(fmt.Sprintf("QueryRow (delivery) failed (%v)\n", err))
 		}
@@ -153,7 +154,7 @@ func SyncCacheAndDatabase() error {
 		}
 
 		// copy payment to cache
-		rows, err = conn.Query(context.Background(), "SELECT * FROM payment;")
+		rows, err = tx.Query(ctx, "SELECT * FROM payment;")
 		if err != nil {
 			return errors.New(fmt.Sprintf("QueryRow (payment) failed (%v)\n", err))
 		}
@@ -173,7 +174,7 @@ func SyncCacheAndDatabase() error {
 		}
 
 		// copy items to cache
-		rows, err = conn.Query(context.Background(), "SELECT * FROM items;")
+		rows, err = tx.Query(ctx, "SELECT * FROM items;")
 		if err != nil {
 			return errors.New(fmt.Sprintf("QueryRow (items) failed (%v)\n", err))
 		}
@@ -191,7 +192,6 @@ func SyncCacheAndDatabase() error {
 				models.Cache[value.OrderUID] = value
 			}
 		}
-
 	}
 
 	log.Printf("Cache and database synchronized.\n")

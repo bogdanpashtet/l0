@@ -8,10 +8,10 @@ import (
 	"log"
 )
 
-func unmarshalMessage(msg *stan.Msg) (models.Order, error) {
+func unmarshalMessage(m []byte) (models.Order, error) {
 	var order models.Order
 
-	err := json.Unmarshal(msg.Data, &order)
+	err := json.Unmarshal(m, &order)
 	if err != nil {
 		return models.Order{}, err
 	}
@@ -25,11 +25,11 @@ func GetMessage() {
 	sc, _ := stan.Connect("prod", "sub1")
 
 	_, err := sc.Subscribe("msg", func(m *stan.Msg) {
-		order, err := unmarshalMessage(m)
+		order, err := unmarshalMessage(m.Data)
 		if err != nil {
 			log.Printf("Error in marshaling message (incorrect messege type): %v\n", err)
 		} else {
-			err = database.AddMessageToDatabase(order) // add to database
+			err = database.AddMessageToDatabase(database.Connection(), order) // add to database
 			if err != nil {
 				log.Print(err)
 			} else {
