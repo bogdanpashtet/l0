@@ -2,4 +2,4 @@
 
 <h3>Ссылка на видео с демонстрацией работы: 
 
-https://youtu.be/82JGcZgBYeY
+https://youtu.be/61ssjnQA0HU
